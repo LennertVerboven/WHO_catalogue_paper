@@ -1,6 +1,6 @@
 import re
 
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 import pandas as pd
 
@@ -10,12 +10,12 @@ gff = pd.read_csv('./data/Mycobacterium_tuberculosis_H37Rv_gff_v4.gff', names=['
 catalogue_1 = pd.read_excel('./data/WHO-UCN-GTB-PCI-2021.7-eng 2.xlsx', sheet_name='Mutation_catalogue', header=[0,1]).set_index([('variant (common_name)', 'Unnamed: 2_level_1')])
 # Load the reference genome to impute missing data from deletions
 h37rv = ''
-f = open('./data/h37rv_reference/h37rv.fasta', 'r')
+f = open('./data/h37rv.fasta', 'r')
 f.readline()
 for line in f.readlines():
     h37rv += line.replace('\n', '')
 
-a_map_1 = {
+aa_map_1 = {
     'Ala': 'A',
     'Arg': 'R',
     'Asn': 'N',
@@ -222,4 +222,4 @@ for idx, row in tqdm(classified[classified.complete_variant_fail == False].iterr
     classified.loc[idx, 'fail_reason'] = x[4]
 
 # Write results to csv file
-classified.to_csv('/Users/lennertverboven/Desktop/who_catalogue.csv', index=False)
+classified.to_csv('./data/who_catalogue.csv', index=False)
