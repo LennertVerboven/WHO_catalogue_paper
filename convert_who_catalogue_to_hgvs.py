@@ -4,6 +4,17 @@ from tqdm.notebook import tqdm
 
 import pandas as pd
 
+# Load the reference GFF file
+gff = pd.read_csv('./data/Mycobacterium_tuberculosis_H37Rv_gff_v4.gff', names=['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes'], sep='\t', header=None)
+# Load the WHO catalogue
+catalogue_1 = pd.read_excel('./data/WHO-UCN-GTB-PCI-2021.7-eng 2.xlsx', sheet_name='Mutation_catalogue', header=[0,1]).set_index([('variant (common_name)', 'Unnamed: 2_level_1')])
+# Load the reference genome to impute missing data from deletions
+h37rv = ''
+f = open('./data/h37rv_reference/h37rv.fasta', 'r')
+f.readline()
+for line in f.readlines():
+    h37rv += line.replace('\n', '')
+
 a_map_1 = {
     'Ala': 'A',
     'Arg': 'R',
@@ -118,7 +129,6 @@ def process_variant(variant):
     return (None, None, None, True, 'does not match indel or variant')
 
 # Get the gene information from the GFF file
-gff = pd.read_csv('../data/Mycobacterium_tuberculosis_H37Rv_gff_v4.gff', names=['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes'], sep='\t', header=None)
 info_regex = re.compile('Locus=(.*);Name=(.*);Function=')
 gff[['locus_tag', 'name']] = gff.attributes.apply(lambda info: pd.Series(info_regex.match(info).groups([1,2])))
 
@@ -138,8 +148,6 @@ for _, row in gff.iterrows():
     gff_dict[row['locus_tag']] = gene
     gff_dict[row['name']] = gene
 
-# Load the WHO catalogue
-catalogue_1 = pd.read_excel('../data/WHO-UCN-GTB-PCI-2021.7-eng 2.xlsx', sheet_name='Mutation_catalogue', header=[0,1]).set_index([('variant (common_name)', 'Unnamed: 2_level_1')])
 
 # Prepare the WHO catalogue dataframe
 classified = []
@@ -168,13 +176,6 @@ for idx, row in tqdm(classified.iterrows(), total=classified.shape[0]):
     classified.loc[idx, 'hgvs'] = x[2]
     classified.loc[idx, 'fail'] = x[3]
     classified.loc[idx, 'fail_reason'] = x[4]
-
-# Load the reference genome to impute missing data from deletions
-h37rv = ''
-f = open('../../h37rv_reference/h37rv.fasta', 'r')
-f.readline()
-for line in f.readlines():
-    h37rv += line.replace('\n', '')
 
 # Impute missing data for deletions
 lenght_mismatch = classified[classified.fail_reason == 'length mismatch'].sort_values(by='variant', key=func)
